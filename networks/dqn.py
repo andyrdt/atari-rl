@@ -138,6 +138,10 @@ class Network(object):
       return self.ensemble_greedy_action
 
   @property
+  def eval_actions(self):
+      return self.active_head.reg_action_values
+
+  @property
   def variables(self):
     return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, self.scope.name)
 
@@ -155,6 +159,7 @@ class ActionValueHead(object):
       action_values = reward_scaling.unnormalize_output(action_values)
       value, greedy_action = tf.nn.top_k(action_values, k=1)
 
+      self.reg_action_values = tf.identity(action_values)
       self.action_values = tf.multiply(
           inputs.alive, action_values, name='action_values')
       self.value = tf.squeeze(inputs.alive * value, axis=1, name='value')

@@ -5,6 +5,11 @@ import util
 
 from gym.envs.atari.atari_env import AtariEnv
 
+def to_ram(ale):
+    ram_size = ale.getRAMSize()
+    ram = np.zeros((ram_size),dtype=np.uint8)
+    ale.getRAM(ram)
+    return ram
 
 class Atari(object):
   def __init__(self, summary, config):
@@ -27,6 +32,9 @@ class Atari(object):
     self.render = config.render
 
     config.num_actions = self.env.action_space.n
+    print('Number of actions: {}'.format(self.env.action_space.n))
+    print('Action meanings:')
+    print(self.env.get_action_meanings())
     self.episode = 0
 
   def sample_action(self):
@@ -107,5 +115,6 @@ class Atari(object):
 class FastAtariEnv(AtariEnv):
   def _get_image(self):
     # Don't reorder from rgb to bgr as we're converting to greyscale anyway
-    self.ale.getScreenRGB(self._buffer)  # says rgb but actually bgr
-    return self._buffer
+    return self.ale.getScreenRGB2()  # says rgb but actually bgr
+  def _get_ram(self):
+    return to_ram(self.ale)

@@ -31,6 +31,12 @@ class Agent(object):
           {self.policy_network.inputs.observations: [observation]})
       return action
 
+  def get_action_values(self, session, step, observation):
+      return session.run(self.policy_network.eval_actions,{self.policy_network.inputs.observations: [observation]})
+
+  def get_ram_state(self):
+      return self.atari.env._get_ram()
+
   def epsilon(self, step):
     """Epsilon is linearly annealed from an initial exploration value
     to a final exploration value over a number of steps"""

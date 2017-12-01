@@ -82,6 +82,10 @@ flags.DEFINE_integer('train_period', 4,
                      'The number of steps between training updates')
 flags.DEFINE_float('discount_rate', 0.99, 'Discount rate for future rewards')
 
+flags.DEFINE_boolean('save_test_data', False, 'save test data 4x84x84 frame and RAM pairs')
+flags.DEFINE_string('test_data_dir', 'empty', 'directory to save test data in')
+flags.DEFINE_boolean('eval_test_data', False, 'evaluate the test data in test_data_dir')
+
 # Exploration
 flags.DEFINE_float('initial_exploration', 1.0,
                    'Initial value of epsilon is epsilon-greedy exploration')

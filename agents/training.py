@@ -1,6 +1,8 @@
 import os
 import tensorflow as tf
 from threading import Thread
+import numpy as np
+import os.path
 
 from networks.factory import NetworkFactory
 import util
@@ -58,7 +60,16 @@ class Trainer(object):
     # Initialize step counters
     step, steps_until_train = 0, self.config.train_period
 
+    #test_data_out_dir = '/Users/andy/Desktop/Columbia 4.1/Deep Learning/Project/test_data_gen/data/'
+    test_data_out_dir = self.config.test_data_dir
+    out_pair_n = 0
+
+    if self.config.eval_test_data:
+        self.eval_test_data(agent, session, step)
+        return
+
     util.log('Starting training')
+
     while self.training and step < self.config.num_steps:
       # Start new episode
       observation, _, done = agent.new_game()
@@ -66,8 +77,28 @@ class Trainer(object):
       # Play until losing
       while not done:
         self.reset_target_network(session, step)
+
+        # run evaluation network on observation to get best action:
         action = agent.action(session, step, observation)
-        observation, _, done = agent.take_action(action)
+
+
+        action_values = agent.get_action_values(session, step, observation)
+
+        ram_state = agent.get_ram_state()
+
+        if np.random.binomial(1,0.01) == 1 and self.config.save_test_data:
+            np.save(test_data_out_dir+'frames'+str(out_pair_n),observation)
+            np.save(test_data_out_dir+'ram'+str(out_pair_n),ram_state)
+            out_pair_n = out_pair_n + 1
+
+            # print('Action values: {}'.format(action_values))
+            # print('Chosen action: {}'.format(action))
+            # print('Observation frames: {}'.format(np.shape(observation)))
+            # print('RAM state: {}'.format(ram_state))
+
+        # take best action, and get back resulting observation
+        observation, reward, done = agent.take_action(action)
+
         step += 1
         steps_until_train -= 1
         if done or (steps_until_train == 0):
@@ -99,3 +130,13 @@ class Trainer(object):
   def stop_training(self):
     util.log('Stopping training')
     self.training = False
+
+  def eval_test_data(self,agent,session, step):
+    test_data_out_dir = self.config.test_data_dir
+    for i in range(0,1000):
+      if os.path.exists(test_data_out_dir + 'frames' + str(i) + '.npy'):
+        observation = np.load(test_data_out_dir + 'frames' + str(i) + '.npy')
+        action_values = agent.get_action_values(session, step, observation)
+        print(action_values)
+      else:
+        break
