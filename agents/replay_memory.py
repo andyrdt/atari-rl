@@ -25,8 +25,8 @@ class ReplayMemory(object):
 
     self.rams = np.zeros([config.replay_capacity] + [128], dtype=np.uint8)
 
-    self.frames = np.zeros(
-        [config.replay_capacity] + list(config.input_shape), dtype=np.uint8)
+#    self.frames = np.zeros(
+#        [config.replay_capacity] + list(config.input_shape), dtype=np.uint8)
     self.actions = np.zeros([config.replay_capacity], dtype=np.int32)
     self.rewards = np.zeros([config.replay_capacity], dtype=np.float32)
     self.discounted_rewards = np.zeros(
@@ -53,7 +53,7 @@ class ReplayMemory(object):
     for frame in frames_observation:
       self.cursor = self.offset_index(self.cursor, 1)
       self.count = min(self.count + 1, self.capacity)
-      self.frames[self.cursor] = frame
+#      self.frames[self.cursor] = frame
       self.alives[self.cursor] = True
     self.rams[self.cursor] = ram_observation
 
@@ -67,7 +67,7 @@ class ReplayMemory(object):
     self.count = min(self.count + 1, self.capacity)
 
     self.alives[self.cursor] = not done
-    self.frames[self.cursor] = next_frames_observation[-1]
+#    self.frames[self.cursor] = next_frames_observation[-1]
     self.rams[self.cursor] = next_ram_observation
 
     if done:

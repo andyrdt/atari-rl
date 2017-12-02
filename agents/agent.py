@@ -45,9 +45,11 @@ class Agent(object):
           {self.policy_network.inputs.ram: [np.expand_dims(ram_observation, axis=0)]})
       return action
 
+  def get_action_values(self, session, step, frames_observation):
+      return session.run(self.policy_network.eval_actions,{self.policy_network.inputs.observations: [frames_observation]})
 
-  def get_action_values(self, session, step, observation):
-      return session.run(self.policy_network.eval_actions,{self.policy_network.inputs.observations: [observation]})
+  def get_action_values_ram(self, session, step, ram_observation):
+      return session.run(self.policy_network.eval_actions,{self.policy_network.inputs.observations: [np.expand_dims(ram_observation, axis=0)]})
 
   def get_ram_state(self):
       return self.atari.env._get_ram()

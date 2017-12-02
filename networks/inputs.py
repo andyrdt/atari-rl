@@ -20,13 +20,13 @@ class Inputs(object):
           feed_data=lambda memory, indices: memory.rams[indices],
           preprocess_offset=lambda ram: (tf.to_float(ram) / 256))
 
-      self.frames = auto_placeholder(
-          dtype=tf.uint8,
-          shape=[config.input_frames] + list(config.input_shape),
-          name='frames',
-          feed_data=lambda memory, indices: memory.frames[indices],
-          # Centre around 0, scale between [-1, 1]
-          preprocess_offset=lambda frames: (tf.to_float(frames) / 127.5) - 1)
+      # self.frames = auto_placeholder(
+      #     dtype=tf.uint8,
+      #     shape=[config.input_frames] + list(config.input_shape),
+      #     name='frames',
+      #     feed_data=lambda memory, indices: memory.frames[indices],
+      #     # Centre around 0, scale between [-1, 1]
+      #     preprocess_offset=lambda frames: (tf.to_float(frames) / 127.5) - 1)
 
       self.actions = auto_placeholder(
           tf.int32, [1], 'actions',
@@ -99,7 +99,7 @@ class OffsetInput(object):
       self.observations = inputs.ram
 
     self.ram = inputs.ram.offset_data(t, 'ram')
-    self.frames = inputs.frames.offset_data(t, 'frames')
+    # self.frames = inputs.frames.offset_data(t, 'frames')
     self.action = inputs.actions.offset_data(t, 'action')
     self.reward = inputs.rewards.offset_data(t, 'reward')
     self.alive = inputs.alives.offset_data(t, 'alive')
@@ -149,14 +149,9 @@ class RequiredFeeds(object):
   def feed_dict(self, indices, replay_memory):
     indices = indices.reshape(-1, 1)
     feed_dict = {}
-    # print('indices: {}'.format(indices))
-    # print('self.feeds.items(): {}'.format(self.feeds.items()))
-
 
     for feed, input_range in self.feeds.items():
       offset_indices = replay_memory.offset_index(indices, input_range)
-      # print('feed: {}'.format(feed))
-      # print('offset_indices: {}'.format(offset_indices))
       feed_dict[feed] = feed.feed_data(replay_memory, offset_indices)
       if hasattr(feed, 'zero_offset'):
         feed_dict[feed.zero_offset] = -min(input_range)

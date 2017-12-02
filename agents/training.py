@@ -82,14 +82,7 @@ class Trainer(object):
 
         # run evaluation network on observation to get best action:
 
-        #action = agent.action(session, step, frames_observation)
-
-        # print(np.shape(ram_observation))
         action = agent.action_ram(session, step, ram_observation)
-
-        #action_values = agent.get_action_values(session, step, frames_observation)
-
-
 
         if np.random.binomial(1,0.01) == 1 and self.config.save_test_data:
             np.save(test_data_out_dir+'frames'+str(out_pair_n),frames_observation)
@@ -126,10 +119,6 @@ class Trainer(object):
 
     batch = replay_memory.sample_batch(fetches, self.config.batch_size)
 
-    # print(batch.feed_dict())
-    # print(fetches)
-    # print(self.config.batch_size)
-
     if batch:
       step, priorities, summary = session.run(fetches, batch.feed_dict())
       batch.update_priorities(priorities)
@@ -144,9 +133,9 @@ class Trainer(object):
   def eval_test_data(self,agent,session, step):
     test_data_out_dir = self.config.test_data_dir
     for i in range(0,1000):
-      if os.path.exists(test_data_out_dir + 'frames' + str(i) + '.npy'):
-        observation = np.load(test_data_out_dir + 'frames' + str(i) + '.npy')
-        action_values = agent.get_action_values(session, step, observation)
+      if os.path.exists(test_data_out_dir + 'ram' + str(i) + '.npy'):
+        ram_observation = np.load(test_data_out_dir + 'ram' + str(i) + '.npy')
+        action_values = agent.get_action_values_ram(session, step, ram_observation)
         print(action_values)
       else:
         break
