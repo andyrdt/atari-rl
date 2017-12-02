@@ -15,12 +15,21 @@ class Network(object):
     self.num_heads = config.num_bootstrap_heads
     self.using_ensemble = config.bootstrap_use_ensemble
 
-    conv_output = self.build_conv_layers(inputs)
+    # TODO
+    # delete following lines
+##################################
 
-    if config.actor_critic:
-      self.build_actor_critic_heads(inputs, conv_output, reward_scaling)
-    else:
-      self.build_action_value_heads(inputs, conv_output, reward_scaling)
+    # conv_output = self.build_conv_layers(inputs)
+    #
+    # if config.actor_critic:
+    #   self.build_actor_critic_heads(inputs, conv_output, reward_scaling)
+    # else:
+    #   self.build_action_value_heads(inputs, conv_output, reward_scaling)
+
+
+#################################
+    # TODO
+    self.build_ram_action_value_heads(inputs, reward_scaling)
 
     if self.using_ensemble:
       self.build_ensemble()
@@ -70,6 +79,12 @@ class Network(object):
                         self.config) for i in range(self.num_heads)
     ]
 
+    #TODO
+    # self.heads = [
+    #     RamActionValueHead('head%d' % i, inputs, reward_scaling,
+    #                     self.config) for i in range(self.num_heads)
+    # ]
+
     self.action_values = tf.stack(
         [head.action_values for head in self.heads],
         axis=1,
@@ -80,6 +95,28 @@ class Network(object):
         inputs.action, name='taken_action_value')
 
     value, greedy_action = tf.nn.top_k(self.action_values, k=1)
+    self.value = tf.squeeze(value, axis=2, name='value')
+    self.greedy_action = tf.squeeze(
+        greedy_action, axis=2, name='greedy_action')
+
+  def build_ram_action_value_heads(self, inputs, reward_scaling):
+
+    self.heads = [
+        RamActionValueHead('head%d' % i, inputs, reward_scaling,
+                        self.config) for i in range(self.num_heads)
+    ]
+
+    self.action_values = tf.stack(
+        [head.action_values for head in self.heads],
+        axis=1,
+        name='action_values')
+    self.activation_summary(self.action_values)
+
+    self.taken_action_value = self.action_value(
+        inputs.action, name='taken_action_value')
+
+    value, greedy_action = tf.nn.top_k(self.action_values, k=1)
+    print('value: {}'.format(value))
     self.value = tf.squeeze(value, axis=2, name='value')
     self.greedy_action = tf.squeeze(
         greedy_action, axis=2, name='greedy_action')
@@ -181,6 +218,38 @@ class ActionValueHead(object):
 
     else:
       hidden = tf.layers.dense(conv_outputs, 256, tf.nn.relu, name='hidden')
+      return tf.layers.dense(hidden, config.num_actions, name='action_value')
+
+class RamActionValueHead(object):
+  def __init__(self, name, inputs, reward_scaling, config):
+    with tf.variable_scope(name):
+      flat_inputs = tf.reshape(inputs.ram, [-1, 128])
+      action_values = self.action_value_layer(flat_inputs, config)
+      action_values = reward_scaling.unnormalize_output(action_values)
+      value, greedy_action = tf.nn.top_k(action_values, k=1)
+
+      self.reg_action_values = tf.identity(action_values)
+      self.action_values = tf.multiply(
+          inputs.alive, action_values, name='action_values')
+      self.value = tf.squeeze(inputs.alive * value, axis=1, name='value')
+      self.greedy_action = tf.squeeze(
+          greedy_action, axis=1, name='greedy_action')
+
+  def action_value_layer(self, ram_vec, config):
+    if config.dueling:
+      hidden_value = tf.layers.dense(
+          ram_vec, 256, tf.nn.relu, name='hidden_value')
+      value = tf.layers.dense(hidden_value, 1, name='value')
+
+      hidden_actions = tf.layers.dense(
+          ram_vec, 256, tf.nn.relu, name='hidden_actions')
+      actions = tf.layers.dense(
+          hidden_actions, config.num_actions, name='actions')
+
+      return value + actions - tf.reduce_mean(actions, axis=1, keep_dims=True)
+
+    else:
+      hidden = tf.layers.dense(ram_vec, 256, tf.nn.relu, name='hidden')
       return tf.layers.dense(hidden, config.num_actions, name='action_value')
 
 

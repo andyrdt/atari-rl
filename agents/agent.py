@@ -17,19 +17,34 @@ class Agent(object):
 
   def new_game(self):
     self.policy_network.sample_head()
-    observation, reward, done = self.atari.reset()
-    self.replay_memory.store_new_episode(observation)
-    return observation, reward, done
+    frames_observation, reward, done = self.atari.reset()
+    ram_observation = self.get_ram_state()
 
-  def action(self, session, step, observation):
+    self.replay_memory.store_new_episode(frames_observation,ram_observation)
+    return frames_observation, reward, done
+
+
+  def action(self, session, step, frames_observation):
     # Epsilon greedy exploration/exploitation even for bootstrapped DQN
     if np.random.rand() < self.epsilon(step):
       return self.atari.sample_action()
     else:
       [action] = session.run(
           self.policy_network.choose_action,
-          {self.policy_network.inputs.observations: [observation]})
+          {self.policy_network.inputs.observations: [frames_observation]})
       return action
+
+  def action_ram(self, session, step, ram_observation):
+    # Epsilon greedy exploration/exploitation even for bootstrapped DQN
+
+    if np.random.rand() < self.epsilon(step):
+      return self.atari.sample_action()
+    else:
+      [action] = session.run(
+          self.policy_network.choose_action,
+          {self.policy_network.inputs.ram: [np.expand_dims(ram_observation, axis=0)]})
+      return action
+
 
   def get_action_values(self, session, step, observation):
       return session.run(self.policy_network.eval_actions,{self.policy_network.inputs.observations: [observation]})
@@ -54,14 +69,15 @@ class Agent(object):
     return epsilon
 
   def take_action(self, action):
-    observation, reward, done = self.atari.step(action)
-    training_reward = self.process_reward(reward, observation)
+    frames_observation, reward, done = self.atari.step(action)
+    training_reward = self.process_reward(reward, frames_observation)
+    ram_observation = self.atari.env._get_ram()
 
     # Store action, reward and done with the next observation
     self.replay_memory.store_transition(action, training_reward, done,
-                                        observation)
+                                        frames_observation, ram_observation)
 
-    return observation, reward, done
+    return frames_observation, reward, done
 
   def process_reward(self, reward, frames):
     if self.config.exploration_bonus:

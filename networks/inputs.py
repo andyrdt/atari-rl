@@ -13,6 +13,13 @@ class Inputs(object):
       self.replay_count = auto_placeholder(tf.int32, (), 'replay_count',
                                            lambda memory, _: memory.count)
 
+      self.ram = auto_placeholder(
+          dtype=tf.uint8,
+          shape=[1,128],
+          name='ram',
+          feed_data=lambda memory, indices: memory.rams[indices],
+          preprocess_offset=lambda ram: (tf.to_float(ram) / 256))
+
       self.frames = auto_placeholder(
           dtype=tf.uint8,
           shape=[config.input_frames] + list(config.input_shape),
@@ -88,8 +95,10 @@ class OffsetInput(object):
   def __init__(self, inputs, t):
     # Only use for passing in full observation
     if t == 0:
-      self.observations = inputs.frames
+      #self.observations = inputs.frames
+      self.observations = inputs.ram
 
+    self.ram = inputs.ram.offset_data(t, 'ram')
     self.frames = inputs.frames.offset_data(t, 'frames')
     self.action = inputs.actions.offset_data(t, 'action')
     self.reward = inputs.rewards.offset_data(t, 'reward')
@@ -140,8 +149,14 @@ class RequiredFeeds(object):
   def feed_dict(self, indices, replay_memory):
     indices = indices.reshape(-1, 1)
     feed_dict = {}
+    # print('indices: {}'.format(indices))
+    # print('self.feeds.items(): {}'.format(self.feeds.items()))
+
+
     for feed, input_range in self.feeds.items():
       offset_indices = replay_memory.offset_index(indices, input_range)
+      # print('feed: {}'.format(feed))
+      # print('offset_indices: {}'.format(offset_indices))
       feed_dict[feed] = feed.feed_data(replay_memory, offset_indices)
       if hasattr(feed, 'zero_offset'):
         feed_dict[feed.zero_offset] = -min(input_range)

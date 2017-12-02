@@ -72,23 +72,28 @@ class Trainer(object):
 
     while self.training and step < self.config.num_steps:
       # Start new episode
-      observation, _, done = agent.new_game()
+      frames_observation, _, done = agent.new_game()
 
       # Play until losing
       while not done:
         self.reset_target_network(session, step)
 
+        ram_observation = agent.get_ram_state()
+
         # run evaluation network on observation to get best action:
-        action = agent.action(session, step, observation)
+
+        #action = agent.action(session, step, frames_observation)
+
+        # print(np.shape(ram_observation))
+        action = agent.action_ram(session, step, ram_observation)
+
+        #action_values = agent.get_action_values(session, step, frames_observation)
 
 
-        action_values = agent.get_action_values(session, step, observation)
-
-        ram_state = agent.get_ram_state()
 
         if np.random.binomial(1,0.01) == 1 and self.config.save_test_data:
-            np.save(test_data_out_dir+'frames'+str(out_pair_n),observation)
-            np.save(test_data_out_dir+'ram'+str(out_pair_n),ram_state)
+            np.save(test_data_out_dir+'frames'+str(out_pair_n),frames_observation)
+            np.save(test_data_out_dir+'ram'+str(out_pair_n),ram_observation)
             out_pair_n = out_pair_n + 1
 
             # print('Action values: {}'.format(action_values))
@@ -97,7 +102,7 @@ class Trainer(object):
             # print('RAM state: {}'.format(ram_state))
 
         # take best action, and get back resulting observation
-        observation, reward, done = agent.take_action(action)
+        frames_observation, reward, done = agent.take_action(action)
 
         step += 1
         steps_until_train -= 1
@@ -120,6 +125,11 @@ class Trainer(object):
     fetches = [self.global_step, self.train_op] + self.summary.operation(step)
 
     batch = replay_memory.sample_batch(fetches, self.config.batch_size)
+
+    # print(batch.feed_dict())
+    # print(fetches)
+    # print(self.config.batch_size)
+
     if batch:
       step, priorities, summary = session.run(fetches, batch.feed_dict())
       batch.update_priorities(priorities)

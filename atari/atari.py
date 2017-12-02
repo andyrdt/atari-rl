@@ -63,16 +63,26 @@ class Atari(object):
 
       if done: self.reset()
 
+    ram_observation = self.env._get_ram()
+    #TODO
+    #return ram_observation, self.score, done
+      
     return self.frames[-self.input_frames:], self.score, done
 
   def step(self, action):
     frame, reward, done, _ = self.env.step(action)
+    ram_observation = self.env._get_ram()
+
+
     if self.render: self.env.render()
 
     self.steps += 1
     self.frames.append(self.process_frame(self.last_frame, frame))
     self.last_frame = frame
     self.score += reward
+
+    #TODO
+    #return ram_observation, reward, done
 
     return self.frames[-self.input_frames:], reward, done
 

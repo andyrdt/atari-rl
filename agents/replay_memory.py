@@ -22,6 +22,9 @@ class ReplayMemory(object):
     self.count = 0
 
     # Store all values in numpy arrays
+
+    self.rams = np.zeros([config.replay_capacity] + [128], dtype=np.uint8)
+
     self.frames = np.zeros(
         [config.replay_capacity] + list(config.input_shape), dtype=np.uint8)
     self.actions = np.zeros([config.replay_capacity], dtype=np.int32)
@@ -46,14 +49,15 @@ class ReplayMemory(object):
     else:
       raise Exception('Unknown replay_priorities: ' + config.replay_priorities)
 
-  def store_new_episode(self, observation):
-    for frame in observation:
+  def store_new_episode(self, frames_observation, ram_observation):
+    for frame in frames_observation:
       self.cursor = self.offset_index(self.cursor, 1)
       self.count = min(self.count + 1, self.capacity)
       self.frames[self.cursor] = frame
       self.alives[self.cursor] = True
+    self.rams[self.cursor] = ram_observation
 
-  def store_transition(self, action, reward, done, next_observation):
+  def store_transition(self, action, reward, done, next_frames_observation, next_ram_observation):
     self.actions[self.cursor] = action
     self.rewards[self.cursor] = reward
     self.discounted_rewards[self.cursor] = reward
@@ -63,7 +67,8 @@ class ReplayMemory(object):
     self.count = min(self.count + 1, self.capacity)
 
     self.alives[self.cursor] = not done
-    self.frames[self.cursor] = next_observation[-1]
+    self.frames[self.cursor] = next_frames_observation[-1]
+    self.rams[self.cursor] = next_ram_observation
 
     if done:
       # Update discounted_rewards for episode
