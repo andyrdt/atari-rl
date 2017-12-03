@@ -50,11 +50,17 @@ class ReplayMemory(object):
       raise Exception('Unknown replay_priorities: ' + config.replay_priorities)
 
   def store_new_episode(self, frames_observation, ram_observation):
-    for frame in frames_observation:
-      self.cursor = self.offset_index(self.cursor, 1)
-      self.count = min(self.count + 1, self.capacity)
-#      self.frames[self.cursor] = frame
-      self.alives[self.cursor] = True
+#     for frame in frames_observation:
+#       print('frame')
+#       print('cursor: {}'.format(self.cursor))
+#       self.cursor = self.offset_index(self.cursor, 1)
+#       self.count = min(self.count + 1, self.capacity)
+# #      self.frames[self.cursor] = frame
+#       self.alives[self.cursor] = True
+
+    self.cursor = self.offset_index(self.cursor, 1)
+    self.count = min(self.count + 1, self.capacity)
+
     self.rams[self.cursor] = ram_observation
 
   def store_transition(self, action, reward, done, next_frames_observation, next_ram_observation):

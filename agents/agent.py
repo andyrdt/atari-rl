@@ -42,7 +42,9 @@ class Agent(object):
     else:
       [action] = session.run(
           self.policy_network.choose_action,
-          {self.policy_network.inputs.ram: [np.expand_dims(ram_observation, axis=0)]})
+          #{self.policy_network.inputs.ram: [np.expand_dims(ram_observation, axis=0)]})
+          {self.policy_network.inputs.observations: [np.expand_dims(ram_observation, axis=0)]})
+
       return action
 
   def get_action_values(self, session, step, frames_observation):
