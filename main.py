@@ -13,6 +13,7 @@ flags.DEFINE_string('game', 'SpaceInvaders',
                     'The Arcade Learning Environment game to play')
 flags.DEFINE_string('frameskip', 4, 'Number of frames to repeat actions for. '
                     'Can be int or tuple with min and max+1')
+flags.DEFINE_boolean('use_gpu', True, 'Whether to use gpu or not. cpu use NHWC and gpu use NCHW for data_format')
 flags.DEFINE_float(
     'repeat_action_probability', 0.25,
     'Probability of ignoring the agent action and repeat last action')
@@ -148,6 +149,11 @@ def create_config():
   config.exploration_frame_shape = eval(str(config.exploration_frame_shape))
   config.reward_clipping = config.reward_clipping and not config.reward_scaling
   config.run_dir = util.run_directory(config)
+
+  if config.use_gpu:
+    config.data_format = 'NCHW'
+  else:
+    config.data_format = 'NHWC'
 
   if not config.bootstrapped: config.num_bootstrap_heads = 1
 

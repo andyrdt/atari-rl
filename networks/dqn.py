@@ -28,14 +28,25 @@ class Network(object):
     self.sample_head()
 
   def build_conv_layers(self, inputs):
-    nhwc = tf.transpose(inputs.frames, [0, 2, 3, 1])
-    self.activation_summary(nhwc)
+    if self.config.use_gpu:
+        inputframe = inputs.frames
+        data_format = 'channels_first'
+    else:
+        inputframe = tf.transpose(inputs.frames, [0, 2, 3, 1])
+        data_format = 'channels_last'
+    self.activation_summary(inputframe)
+
+
+    #self.activation_summary(data_format)
+
     conv1 = tf.layers.conv2d(
-        nhwc,
+        #nhwc,
+        inputframe,
         filters=32,
         kernel_size=[8, 8],
         strides=[4, 4],
         activation=tf.nn.relu,
+        data_format = data_format,
         name='conv1')
     self.activation_summary(conv1)
     conv2 = tf.layers.conv2d(
@@ -44,6 +55,7 @@ class Network(object):
         kernel_size=[4, 4],
         strides=[2, 2],
         activation=tf.nn.relu,
+        data_format = data_format,
         name='conv2')
     self.activation_summary(conv2)
     conv3 = tf.layers.conv2d(
@@ -52,8 +64,10 @@ class Network(object):
         kernel_size=[3, 3],
         strides=[1, 1],
         activation=tf.nn.relu,
+        data_format = data_format,
         name='conv3')
     self.activation_summary(conv3)
+    print(conv3.shape)
     conv_output = tf.reshape(conv3, [-1, 64 * 7 * 7])
 
     # Rescale gradients entering the last convolution layer
