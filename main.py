@@ -84,6 +84,7 @@ flags.DEFINE_integer('train_period', 4,
 flags.DEFINE_float('discount_rate', 0.99, 'Discount rate for future rewards')
 
 flags.DEFINE_boolean('save_test_data', False, 'save test data 4x84x84 frame and RAM pairs')
+flags.DEFINE_integer('save_test_data_n', 0, 'number of frame and RAM pairs to save')
 flags.DEFINE_string('test_data_dir', 'empty', 'directory to save test data in')
 flags.DEFINE_boolean('eval_test_data', False, 'evaluate the test data in test_data_dir')
 

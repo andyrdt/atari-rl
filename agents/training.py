@@ -62,6 +62,13 @@ class Trainer(object):
 
     #test_data_out_dir = '/Users/andy/Desktop/Columbia 4.1/Deep Learning/Project/test_data_gen/data/'
     test_data_out_dir = self.config.test_data_dir
+    if self.config.eval_test_data or self.config.save_test_data:
+        if os.path.exists(test_data_out_dir):
+            pass
+        else:
+            print('data directory {} does not exist'.format(test_data_out_dir))
+            return
+
     out_pair_n = 0
 
     if self.config.eval_test_data:
@@ -81,20 +88,16 @@ class Trainer(object):
         # run evaluation network on observation to get best action:
         action = agent.action(session, step, observation)
 
-
         action_values = agent.get_action_values(session, step, observation)
-
-        ram_state = agent.get_ram_state()
 
         if np.random.binomial(1,0.01) == 1 and self.config.save_test_data:
             np.save(test_data_out_dir+'frames'+str(out_pair_n),observation)
-            np.save(test_data_out_dir+'ram'+str(out_pair_n),ram_state)
+            np.save(test_data_out_dir+'ram'+str(out_pair_n),agent.get_ram_state())
+            np.save(test_data_out_dir+'full_frame'+str(out_pair_n),agent.get_full_frame())
             out_pair_n = out_pair_n + 1
-
-            # print('Action values: {}'.format(action_values))
-            # print('Chosen action: {}'.format(action))
-            # print('Observation frames: {}'.format(np.shape(observation)))
-            # print('RAM state: {}'.format(ram_state))
+            if out_pair_n == self.config.save_test_data_n:
+                print("done saving {} frame-RAM pairs".format(out_pair_n))
+                return
 
         # take best action, and get back resulting observation
         observation, reward, done = agent.take_action(action)
@@ -133,10 +136,12 @@ class Trainer(object):
 
   def eval_test_data(self,agent,session, step):
     test_data_out_dir = self.config.test_data_dir
-    for i in range(0,1000):
+    i = 0
+    while True:
       if os.path.exists(test_data_out_dir + 'frames' + str(i) + '.npy'):
         observation = np.load(test_data_out_dir + 'frames' + str(i) + '.npy')
         action_values = agent.get_action_values(session, step, observation)
-        print(action_values)
+        print('{}: {}'.format(i,action_values))
+        i = i+1
       else:
         break

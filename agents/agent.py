@@ -36,6 +36,8 @@ class Agent(object):
 
   def get_ram_state(self):
       return self.atari.env._get_ram()
+  def get_full_frame(self):
+      return self.atari.env._get_image()
 
   def epsilon(self, step):
     """Epsilon is linearly annealed from an initial exploration value
