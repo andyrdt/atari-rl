@@ -1,59 +1,76 @@
 # Atari - Deep Reinforcement Learning algorithms in TensorFlow
 
-[![Build Status](https://travis-ci.org/brendanator/atari-rl.svg?branch=master)](https://travis-ci.org/brendanator/atari-rl)
+Learning to play Atari in TensorFlow using Deep Reinforcement Learning.
+This repository is based on code from GitHub user brendanator, and the original code can be found [here](https://github.com/brendanator/atari-rl).
 
-Learning to play Atari in TensorFlow using Deep Reinforcement Learning
+## RAM input variation
+
+While the original code only ran on pixel frame input, we altered it to run on RAM input.
+The RAM for Atari games is a vector of 128 integers, each representing a byte.
+This RAM vector is normalized by dividing by 256 before feeding it to the network.
+
+Let $$|A|$$ represent the number of possible actions for the game being trained on.
+
+The RAM-input networks to have the following architectures:
+
+- Single stream architecture
+    - Input: Normalized RAM vector of length 128
+    - 2 fully connected layers of 256 neurons each
+
+    - Fully connected layer of $$|A|$$ neurons
+
+![Traditional architecture](images/ram_input_architecture_ddqn.jpg)
+
+- Dueling architecture
+    - Input: Normalized RAM vector of length 128
+    - This input is split into two streams: Stream1 and Stream2
+    - Stream1
+        - 2 fully connected layers of 256 neurons each
+
+        - A single neuron - represents state value
+    - Stream2
+        - 2 fully connected layers of 256 neurons each
+
+        - Fully connected layer of $$|A|$$ neurons.
+    - Stream1 and Stream2 are then combined according to the following equation: $$ Q(s,a;\theta, \alpha, \beta) = V(s;\theta,\beta) + \left( A(s,a;\theta,\alpha) - \frac{1}{|\mathcal{A}|} \sum_{a'} A(s,a';\theta,\alpha)\right)$$
+
+![Dueling architecture](images/ram_input_architecture_dueling.jpg 'RAM in')
+
+
+
 
 ## Setup
 ```
-git clone https://github.com/brendanator/atari-rl
+git clone https://github.com/andyrdt/atari-rl
+git checkout ram_input
 git submodule update --init
-conda create --name atari-rl python=3.5
+conda create --name atari-rl python=2.7
 source activate atari-rl
 conda install -y -c https://conda.binstar.org/menpo opencv3
 conda install -y h5py numpy
 pip install tensorflow
 pip install 'gym[atari]'
 ```
-Python 2.7 is also supported
 
 ## Usage
 
 - Show all options - `python main.py --help`
 - Play a specific [Atari game](https://github.com/mgbellemare/Arcade-Learning-Environment/blob/master/src/games/Roms.cpp#L17) - `python main.py --game Breakout`
 
-## Papers Implemented
+- To train an agent on SpaceInvaders and RAM input with double_q learning for 10 million steps, run the following:
+    - `python main.py --game SpaceInvaders --double_q --num_steps 10000000`
+- To then evaluate this agent with an epsilon of 0.05, run the following command:
+    - `python main.py --game SpaceInvaders --double_q --initial_exploration 0.05 --final_exploration 0.05 --train_period 200000000`
 
-- :white_check_mark: [Human Level Control through Deep Reinforcement Learning](http://www.nature.com/nature/journal/v518/n7540/pdf/nature14236.pdf)
-    - `python main.py`
-- :white_check_mark: [Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/pdf/1509.06461.pdf)
-    - `python main.py --double_q`
-- :white_check_mark: [Dueling Network Architectures for Deep Reinforcement Learning](https://arxiv.org/pdf/1511.06581.pdf)
-    - `python main.py --dueling`
-- :white_check_mark: [Learning to Play in a Day: Faster Deep Reinforcement Learning by Optimality Tightening](https://arxiv.org/pdf/1611.01606.pdf)
-    - `python main.py --optimality_tightening`
-- :white_check_mark: [Prioritized Experience Replay](https://arxiv.org/pdf/1511.05952.pdf)
-    - `python main.py --replay_prioritized`
-    - Only proportional prioritized replay is implemented
-- :white_check_mark: [Unifying Count-Based Exploration and Intrinsic Motivation](https://arxiv.org/pdf/1606.01868.pdf)
-    - `python main.py --exploration_bonus`
-- :white_check_mark: [Deep Exploration via Bootstrapped DQN](https://arxiv.org/pdf/1602.04621.pdf)
-    - `python main.py --bootstrapped`
-- :white_check_mark: [Increasing the Action Gap: New Operators for Reinforcement Learning](https://arxiv.org/pdf/1512.04860.pdf)
-    - `python main.py --persistent_advantage_learning`
-- :white_check_mark: [Learning values across many orders of magnitudes](https://arxiv.org/pdf/1602.07714.pdf)
-    - `python main.py --reward_scaling`
-- :white_check_mark: [Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/pdf/1602.01783.pdf)
-    - `python main.py --async one_step`
-    - `python main.py --async n_step`
-    - `python main.py --async n_step --sarsa`
-    - `python main.py --async a3c`
-- :x: [Deep Recurrent Q-Learning for Partially Observable MDPs](https://arxiv.org/pdf/1507.06527.pdf)
-- :x: [Safe and efficient Off-Policy Reinforcement Learning](https://arxiv.org/pdf/1606.02647.pdf)
-- :x: [Continuous Deep Q-Learning with Model-based Acceleration](https://arxiv.org/pdf/1603.00748.pdf)
+- To train an agent on SpaceInvaders and RAM input with double_q learning and a **dueling architecture** for 10 million steps, run the following:
+
+    - `python main.py --game SpaceInvaders --double_q --num_steps 10000000`
+- To then evaluate this agent with an epsilon of 0.05, run the following command:
+    - `python main.py --game SpaceInvaders --double_q --initial_exploration 0.05 --final_exploration 0.05 --train_period 200000000`
 
 ## Acknowledgements
 
+- https://github.com/brendanator/atari-rl
 - https://github.com/mgbellemare/SkipCTS - Used in implementation of [Unifying Count-Based Exploration and Intrinsic Motivation](https://arxiv.org/pdf/1606.01868.pdf)
 - https://github.com/Kaixhin/Atari
 - https://github.com/carpedm20/deep-rl-tensorflow
