@@ -9,7 +9,7 @@ While the original code only ran on pixel frame input, we altered it to run on R
 The RAM for Atari games is a vector of 128 integers, each representing a byte.
 This RAM vector is normalized by dividing by 256 before feeding it to the network.
 
-Let $$|A|$$ represent the number of possible actions for the game being trained on.
+Let N represent the number of possible actions for the game being trained on.
 
 The RAM-input networks to have the following architectures:
 
@@ -17,7 +17,7 @@ The RAM-input networks to have the following architectures:
     - Input: Normalized RAM vector of length 128
     - 2 fully connected layers of 256 neurons each
 
-    - Fully connected layer of $$|A|$$ neurons
+    - Fully connected layer of N neurons
 
 ![Traditional architecture](images/ram_input_architecture_ddqn.jpg)
 
@@ -31,13 +31,12 @@ The RAM-input networks to have the following architectures:
     - Stream2
         - 2 fully connected layers of 256 neurons each
 
-        - Fully connected layer of $$|A|$$ neurons.
-    - Stream1 and Stream2 are then combined according to the following equation: $$ Q(s,a;\theta, \alpha, \beta) = V(s;\theta,\beta) + \left( A(s,a;\theta,\alpha) - \frac{1}{|\mathcal{A}|} \sum_{a'} A(s,a';\theta,\alpha)\right)$$
+        - Fully connected layer of N neurons - represents the action advantage values for each action
+    - Stream1 and Stream2 are then combined
+        - The mean of all action advantage values is subtracted from the action advantage vector.
+        - Then, the state value is added to each element of this vector to yield the Q-values.
 
 ![Dueling architecture](images/ram_input_architecture_dueling.jpg 'RAM in')
-
-
-
 
 ## Setup
 ```
